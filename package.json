@@ -1,6 +1,6 @@
 {
   "name": "yandex-ai",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Yandex GPT integrations for Vercel's AI SDK. Includes LLM, TTS and STT.",
   "author": "Denis Smirnov <wonepng@gmail.com>",
   "license": "MIT",
@@ -13,16 +13,16 @@
       "default": "./dist/index.js"
     },
     "./chat": {
-      "types": "./dist/chat/index.d.ts",
-      "default": "./dist/chat/index.js"
+      "types": "./dist/chat.d.ts",
+      "default": "./dist/chat.js"
     },
     "./speech": {
-      "types": "./dist/speech/index.d.ts",
-      "default": "./dist/speech/index.js"
+      "types": "./dist/speech.d.ts",
+      "default": "./dist/speech.js"
     },
     "./transcript": {
-      "types": "./dist/transcript/index.d.ts",
-      "default": "./dist/transcript/index.js"
+      "types": "./dist/transcript.d.ts",
+      "default": "./dist/transcript.js"
     }
   },
   "files": [

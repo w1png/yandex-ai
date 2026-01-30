@@ -6,7 +6,7 @@ import type {
 	LanguageModelV3GenerateResult,
 } from "@ai-sdk/provider";
 
-type YandexFinishStatus =
+export type YandexFinishStatus =
 	| "ALTERNATIVE_STATUS_UNSPECIFIED"
 	| "ALTERNATIVE_STATUS_PARTIAL"
 	| "ALTERNATIVE_STATUS_TRUNCATED_FINAL"
@@ -14,7 +14,7 @@ type YandexFinishStatus =
 	| "ALTERNATIVE_STATUS_CONTENT_FILTER"
 	| "ALTERNATIVE_STATUS_TOOL_CALLS";
 
-type YandexToolCall = {
+export type YandexToolCall = {
 	functionCall: {
 		/** The name of the function being called. */
 		name: string;
@@ -26,7 +26,7 @@ type YandexToolCall = {
 	};
 };
 
-type YandexToolResult = {
+export type YandexToolResult = {
 	functionResult: {
 		/** The name of the function that was executed. */
 		name: string;
@@ -38,9 +38,9 @@ type YandexToolResult = {
 	};
 };
 
-type YandexMessageRole = "assistant" | "user" | "system";
+export type YandexMessageRole = "assistant" | "user" | "system";
 
-type YandexMessage =
+export type YandexMessage =
 	| {
 			role: YandexMessageRole;
 			text: string;
@@ -64,7 +64,7 @@ type YandexMessage =
 			};
 	  };
 
-type YandexModelId =
+export type YandexModelId =
 	| "aliceai-llm"
 	| "yandexgpt/rc"
 	| "yandexgpt-lite"
@@ -75,7 +75,7 @@ type YandexModelId =
 	| "gemma-3-27b-it/latest"
 	| (string & {});
 
-type YandexTool = {
+export type YandexTool = {
 	/** The name of the function. */
 	name: string;
 	/** A description of the function's purpose or behavior. */
@@ -96,12 +96,12 @@ type YandexTool = {
  * DISABLED: Disables reasoning. The model will generate a response without performing any internal reasoning.
  * ENABLED_HIDDEN: Enables reasoning in a hidden manner without exposing the reasoning steps to the user.
  */
-type YandexReasoningMode =
+export type YandexReasoningMode =
 	| "REASONING_MODE_UNSPECIFIED"
 	| "DISABLED"
 	| "ENABLED_HIDDEN";
 
-type YandexToolChoice =
+export type YandexToolChoice =
 	| {
 			/**
 			 * Specifies the overall tool-calling mode.
@@ -121,7 +121,7 @@ type YandexToolChoice =
 	  };
 
 /** Request for the service to generate text completion. */
-type YandexCompletionRequest = {
+export type YandexCompletionRequest = {
 	/** The ID of the model to be used for completion generation. */
 	modelUri: `gpt://${string}/${string}`;
 	/** Configuration options for completion generation. */
@@ -170,12 +170,12 @@ type YandexCompletionRequest = {
 	toolChoice?: YandexToolChoice;
 };
 
-type YandexAlternatives = {
+export type YandexAlternatives = {
 	message: YandexMessage;
 	status: YandexFinishStatus;
 };
 
-type YandexCompletionResponse = {
+export type YandexCompletionResponse = {
 	alternatives: YandexAlternatives[];
 	usage: {
 		inputTextTokens: string;
@@ -189,7 +189,11 @@ type YandexCompletionResponse = {
 };
 
 export type YandexChatProviderOptions = {
+	/**
+	 * Configures reasoning capabilities for the model, allowing it to perform internal reasoning before responding.
+	 */
 	reasoningOptions?: YandexReasoningMode;
+	/** Controls whether the model can generate multiple tool calls in a single response. Defaults to true. */
 	parallelToolCalls?: boolean;
 };
 
