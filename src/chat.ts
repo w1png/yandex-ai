@@ -202,7 +202,7 @@ export class YandexChatModel implements LanguageModelV3 {
 	private secretKey: string;
 	readonly specificationVersion = "v3";
 	readonly provider = "yandex-cloud";
-	readonly modelId;
+	readonly modelId: string;
 	readonly supportedUrls = {};
 
 	constructor(
