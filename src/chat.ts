@@ -264,7 +264,6 @@ export class YandexChatModel implements LanguageModelV3 {
 				continue;
 			}
 			for (const part of message.content) {
-				console.log({ part });
 				if (typeof part === "string") {
 					convertedMessages.push({
 						role,
