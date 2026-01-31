@@ -104,3 +104,23 @@ for await (const text of textStream) {
   console.log(text);
 }
 ```
+
+## YandexSpeechModel
+```typescript
+export const speechModel = new YandexSpeechModel({
+	folderId: folderId,
+	secretKey: sk,
+});
+
+const generateOptions: YandexSpeechGenerateOptions<"ermil"> = {
+	model: speechModel,
+	voice: "ermil",
+	text: "Привет! Меня зовут Ermil.",
+	outputFormat: "mp3",
+	instructions: "neutral",
+};
+
+const res = await generateSpeech(generateOptions);
+
+await fs.writeFile("test.mp3", res.audio.uint8Array);
+```
