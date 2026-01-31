@@ -25,6 +25,7 @@ bun add yandex-ai
 
 ```typescript
 import { YandexChatModel } from "./chat";
+import { generateText } from "ai";
 
 const chatModel = new YandexChatModel("yandexgpt-lite", {
   folderId,
@@ -82,4 +83,24 @@ const { text } = await agent.generateText({
 });
 
 console.log(text);
+```
+
+## Streaming
+```typescript
+import { YandexChatModel } from "./chat";
+import { streamText } from "ai";
+
+const chatModel = new YandexChatModel("yandexgpt-lite", {
+  folderId,
+  secretKey,
+});
+
+const { textStream } = await streamText({
+  model: chatModel,
+  prompt: "Hello!",
+});
+
+for await (const text of textStream) {
+  console.log(text);
+}
 ```
