@@ -4,6 +4,10 @@ import type {
 	LanguageModelV3Content,
 	LanguageModelV3FinishReason,
 	LanguageModelV3GenerateResult,
+	LanguageModelV3StreamPart,
+	LanguageModelV3StreamResult,
+	LanguageModelV3Usage,
+	SharedV3Warning,
 } from "@ai-sdk/provider";
 
 export type YandexFinishStatus =
@@ -215,14 +219,17 @@ export class YandexChatModel implements LanguageModelV3 {
 	}
 
 	private convertTools(tools: LanguageModelV3CallOptions["tools"]) {
-		const warnings: string[] = [];
+		const warnings: SharedV3Warning[] = [];
 		const convertedTools: YandexTool[] = [];
 		if (!tools) {
 			return { tools: [], warnings: [] };
 		}
 		for (const tool of tools) {
 			if (tool.type !== "function") {
-				warnings.push(`Tool ${tool.name} is not a function tool`);
+				warnings.push({
+					type: "unsupported",
+					feature: "non function tools",
+				});
 				continue;
 			}
 			convertedTools.push({
@@ -256,7 +263,7 @@ export class YandexChatModel implements LanguageModelV3 {
 	private convertFromAiSdkToYandex(
 		messages: LanguageModelV3CallOptions["prompt"],
 	) {
-		const warnings: string[] = [];
+		const warnings: SharedV3Warning[] = [];
 		const convertedMessages: YandexMessage[] = [];
 		for (const message of messages) {
 			const role = this.convertRole(message.role);
@@ -328,11 +335,11 @@ export class YandexChatModel implements LanguageModelV3 {
 	}
 
 	private convertFromYandexToAiSdk(alternatives: YandexAlternatives[]) {
-		const content: LanguageModelV3Content[] = [];
 		let status: LanguageModelV3FinishReason = {
 			raw: undefined,
 			unified: "stop",
 		};
+		const content: LanguageModelV3Content[] = [];
 		for (const part of alternatives) {
 			status = this.convertFinishReason(part.status);
 			if (part.message.text) {
@@ -434,9 +441,7 @@ export class YandexChatModel implements LanguageModelV3 {
 		}
 	}
 
-	async doGenerate(
-		options: LanguageModelV3CallOptions,
-	): Promise<LanguageModelV3GenerateResult> {
+	private async request(stream: boolean, options: LanguageModelV3CallOptions) {
 		const { messages, warnings: messageWarnings } =
 			this.convertFromAiSdkToYandex(options.prompt);
 		const { tools, warnings: toolWarnings } = this.convertTools(options.tools);
@@ -444,7 +449,7 @@ export class YandexChatModel implements LanguageModelV3 {
 		const body: YandexCompletionRequest = {
 			modelUri: `gpt://${this.folderId}/${this.modelId}`,
 			completionOptions: {
-				stream: false,
+				stream,
 				temperature: options.temperature,
 				maxTokens: options.maxOutputTokens,
 				reasoningOptions: po?.reasoningOptions,
@@ -455,7 +460,9 @@ export class YandexChatModel implements LanguageModelV3 {
 				options.responseFormat?.type === "json"
 					? options.responseFormat.schema
 					: undefined,
-			toolChoice: this.convertToolChoice(options.toolChoice),
+			toolChoice: options.toolChoice
+				? this.convertToolChoice(options.toolChoice)
+				: undefined,
 			parallelToolCalls: po?.parallelToolCalls,
 		};
 		const response = await fetch(
@@ -467,13 +474,45 @@ export class YandexChatModel implements LanguageModelV3 {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify(body),
+				signal: options.abortSignal,
 			},
 		);
+
 		if (!response.ok) {
 			throw new Error(
 				`Yandex API error: ${response.status} ${response.statusText}: ${await response.text()}`,
 			);
 		}
+
+		return {
+			warnings: [...messageWarnings, ...toolWarnings],
+			response,
+		};
+	}
+
+	private convertUsage(
+		yandexUsage: YandexCompletionResponse["usage"],
+	): LanguageModelV3Usage {
+		return {
+			inputTokens: {
+				total: Number.parseInt(yandexUsage.inputTextTokens, 10),
+				noCache: Number.parseInt(yandexUsage.inputTextTokens, 10),
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			outputTokens: {
+				total: Number.parseInt(yandexUsage.completionTokens, 10),
+				text: Number.parseInt(yandexUsage.completionTokens, 10),
+				reasoning: 0,
+			},
+		};
+	}
+
+	async doGenerate(
+		options: LanguageModelV3CallOptions,
+	): Promise<LanguageModelV3GenerateResult> {
+		const { response, warnings } = await this.request(false, options);
+
 		const data = (await response.json()) as {
 			result: YandexCompletionResponse;
 		};
@@ -483,27 +522,104 @@ export class YandexChatModel implements LanguageModelV3 {
 		return {
 			content,
 			finishReason,
-			usage: {
-				inputTokens: {
-					total: Number.parseInt(data.result.usage.inputTextTokens, 10),
-					noCache: Number.parseInt(data.result.usage.inputTextTokens, 10),
-					cacheRead: 0,
-					cacheWrite: 0,
-				},
-				outputTokens: {
-					total: Number.parseInt(data.result.usage.completionTokens, 10),
-					text: Number.parseInt(data.result.usage.completionTokens, 10),
-					reasoning: 0,
-				},
-			},
-			warnings: [...messageWarnings, ...toolWarnings].map((s) => ({
-				type: "compatibility",
-				feature: s,
-			})),
+			usage: this.convertUsage(data.result.usage),
+			warnings,
 		};
 	}
 
-	async doStream(): Promise<never> {
-		throw new Error("Стриминг (doStream) пока не реализован.");
+	async doStream(
+		options: LanguageModelV3CallOptions,
+	): Promise<LanguageModelV3StreamResult> {
+		const { response, warnings } = await this.request(true, options);
+		console.log(response);
+
+		if (!response.body) throw new Error("No body");
+
+		let lastFinishReason: LanguageModelV3FinishReason = {
+			raw: undefined,
+			unified: "stop",
+		};
+		let usage: LanguageModelV3Usage = {
+			inputTokens: {
+				total: 0,
+				noCache: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			outputTokens: {
+				total: 0,
+				text: 0,
+				reasoning: 0,
+			},
+		};
+
+		const transformedStream = response.body.pipeThrough(
+			new TransformStream<Uint8Array, LanguageModelV3StreamPart>({
+				start(controller) {
+					controller.enqueue({ type: "stream-start", warnings });
+				},
+				transform: (chunk, controller) => {
+					const u8a = chunk;
+					const str = Buffer.from(u8a).toString();
+
+					if (options.includeRawChunks) {
+						controller.enqueue({ type: "raw", rawValue: str });
+					}
+
+					const data = JSON.parse(str) as {
+						result: YandexCompletionResponse;
+					};
+
+					if (data.result.usage) {
+						usage = this.convertUsage(data.result.usage);
+					}
+
+					const { content, finishReason } = this.convertFromYandexToAiSdk(
+						data.result.alternatives,
+					);
+					lastFinishReason = finishReason;
+
+					for (const part of content) {
+						if (part.type === "text") {
+							controller.enqueue({
+								type: "text-delta",
+								id: "0",
+								delta: part.text,
+							});
+						} else if (part.type === "tool-call") {
+							controller.enqueue({
+								type: "tool-input-start",
+								id: part.toolCallId,
+								toolName: part.toolName,
+							});
+
+							controller.enqueue({
+								type: "tool-input-end",
+								id: part.toolCallId,
+							});
+
+							controller.enqueue({
+								type: "tool-call",
+								toolCallId: part.toolCallId,
+								toolName: part.toolName,
+								input: part.input,
+							});
+						}
+					}
+				},
+				flush: (controller) => {
+					controller.enqueue({ type: "text-end", id: "0" });
+					controller.enqueue({
+						type: "finish",
+						finishReason: lastFinishReason,
+						usage: usage,
+					});
+				},
+			}),
+		);
+
+		return {
+			stream: transformedStream,
+		};
 	}
 }

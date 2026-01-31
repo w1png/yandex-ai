@@ -13,8 +13,8 @@
       "default": "./dist/index.js"
     },
     "./chat": {
-      "types": "./dist/chat.d.ts",
-      "default": "./dist/chat.js"
+      "types": "./dist/chat/index.d.ts",
+      "default": "./dist/chat/index.js"
     },
     "./speech": {
       "types": "./dist/speech.d.ts",
@@ -31,7 +31,7 @@
     "LICENCE"
   ],
   "scripts": {
-    "build": "bunup src/chat.ts src/speech.ts src/transcript.ts",
+    "build": "bunup src/chat/index.ts src/speech.ts src/transcript.ts",
     "typecheck": "tsc --noEmit",
     "test": "echo 'Tests are not implemented yet'",
     "lint": "biome lint .",
