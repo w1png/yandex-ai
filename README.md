@@ -126,3 +126,21 @@ const res = await generateSpeech(generateOptions);
 
 await fs.writeFile("test.mp3", res.audio.uint8Array);
 ```
+
+
+# YandexImageModel
+
+```typescript
+export const imageModel = new YandexImageModel("yandex-art/latest", {
+	folderId: folderId,
+	secretKey: sk,
+});
+
+const res = await generateImage({
+	model: imageModel,
+	prompt: "Draw me a cat",
+	aspectRatio: "16:9",
+});
+
+await fs.writeFile("cat.png", res.image.uint8Array);
+```
