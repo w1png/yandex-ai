@@ -35,7 +35,9 @@ jobs:
       - name: Publish to npm
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: bun publish --access public
+        run: |
+            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+            bun publish --access public
 
       - name: Upload dist files to release
         uses: softprops/action-gh-release@v2
