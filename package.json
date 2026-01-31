@@ -32,6 +32,9 @@
   ],
   "scripts": {
     "build": "bunup src/chat.ts src/speech.ts src/transcript.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'Tests are not implemented yet'",
+    "lint": "biome lint .",
     "publish": "bun publish"
   },
   "peerDependencies": {
@@ -41,6 +44,7 @@
     "ai": "^6.0.62"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.13",
     "bunup": "^0.16.21",
     "typescript": "^5.6.2"
   },
