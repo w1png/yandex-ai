@@ -29,9 +29,8 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
-    // Add this for Bun globals (fetch, crypto, URLSearchParams, console, etc.)
     "types": [
-      "bun-types"
+      "node"
     ]
   }
 }
