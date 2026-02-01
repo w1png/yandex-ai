@@ -458,7 +458,9 @@ export class YandexChatModel implements LanguageModelV3 {
 			tools,
 			jsonSchema:
 				options.responseFormat?.type === "json"
-					? options.responseFormat.schema
+					? {
+							schema: options.responseFormat.schema,
+						}
 					: undefined,
 			toolChoice: options.toolChoice
 				? this.convertToolChoice(options.toolChoice)
