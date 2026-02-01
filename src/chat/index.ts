@@ -532,8 +532,6 @@ export class YandexChatModel implements LanguageModelV3 {
 		options: LanguageModelV3CallOptions,
 	): Promise<LanguageModelV3StreamResult> {
 		const { response, warnings } = await this.request(true, options);
-		console.log(response);
-
 		if (!response.body) throw new Error("No body");
 
 		let lastFinishReason: LanguageModelV3FinishReason = {
