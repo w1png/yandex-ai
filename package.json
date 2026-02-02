@@ -29,8 +29,8 @@
       "default": "./dist/embedding/index.js"
     },
     "./transcript": {
-      "types": "./dist/transcript.d.ts",
-      "default": "./dist/transcript.js"
+      "types": "./dist/transcript/index.d.ts",
+      "default": "./dist/transcript/index.js"
     }
   },
   "files": [
