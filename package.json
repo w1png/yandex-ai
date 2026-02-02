@@ -1,6 +1,6 @@
 {
   "name": "yandex-ai",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Yandex GPT integrations for Vercel's AI SDK. Includes LLM, Embeddings, Image, TTS and STT.",
   "author": "Denis Smirnov <wonepng@gmail.com>",
   "license": "MIT",
